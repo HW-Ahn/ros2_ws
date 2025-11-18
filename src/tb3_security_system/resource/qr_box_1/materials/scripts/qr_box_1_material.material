@@ -1,0 +1,18 @@
+material Custom_QR/Box1
+{
+  technique
+  {
+    pass
+    {
+      ambient 1 1 1 1
+      diffuse 1 1 1 1
+      
+      // 2-1단계에서 지정한 <name>과 일치해야 합니다.
+      texture_unit
+      {
+        // 텍스쳐 이미지 파일의 실제 이름 (이 파일은 'textures' 폴더에 있어야 합니다.)
+        texture qr1.png
+      }
+    }
+  }
+}

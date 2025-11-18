@@ -1,0 +1,30 @@
+가제보 실행 안될때
+
+LAUNCH_FILE=~/turtlebot3_ws/install/turtlebot3_gazebo/share/turtlebot3_gazebo/launch/turtlebot3_world.launch.py
+cp $LAUNCH_FILE ${LAUNCH_FILE}.bak
+sudo apt install --reinstall ros-humble-gazebo-ros-pkgs
+source /usr/share/gazebo/setup.sh
+pkill -f gzserver
+pkill -f gzclient
+source ~/turtlebot3_ws/install/setup.bash
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py gui:=False
+
+
+가제보 실행
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+
+텔레옵
+ros2 run turtlebot3_teleop teleop_keyboard
+
+slam 실행
+ros2 launch turtlebot3_cartographer cartographer.launch.py
+
+지도 작성 및 저장
+ros2 run nav2_map_server map_saver_cli -f my_patrol_map
+
+좌표추출 위한 nav2, rviz2 실행
+ros2 launch turtlebot3_navigation2 navigation2.launch.py \
+    use_sim_time:=True \
+    map:=$HOME/ros2_ws/src/tb3_security_system/resource/my_patrol_map.yaml \
+    use_rviz:=True \
+    params_file:=$HOME/ros2_ws/src/tb3_security_system/config/custom_nav2_params.yaml

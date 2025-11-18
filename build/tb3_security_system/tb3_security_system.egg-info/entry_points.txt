@@ -1,0 +1,6 @@
+[console_scripts]
+behavior_manager = tb3_security_system.nodes.behavior_manager:main
+goal_manager = tb3_security_system.nodes.goal_manager:main
+gui_main = tb3_security_system.gui.gui_main:main
+obstacle_monitor = tb3_security_system.nodes.obstacle_monitor:main
+

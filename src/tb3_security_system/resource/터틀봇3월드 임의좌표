@@ -1,0 +1,135 @@
+    <include>
+      <uri>model://qr_box_1</uri>
+      <pose>-1.8 -2.7 0.125 0 0 0</pose>
+    </include>
+    
+     ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_1/model.sdf -entity qr_box_1 -x -1.8 -y -2.7 -z 0.125
+
+
+    <include>
+      <uri>model://qr_box_2</uri>
+      <pose>1.8 -2.7 0.125 0 0 0</pose>
+    </include>
+    
+     ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_2/model.sdf -entity qr_box_2 -x 1.8 -y -2.7 -z 0.125
+
+
+    <include>
+      <uri>model://qr_box_3</uri>
+      <pose>1.8 2.7 0.125 0 0 0</pose>
+    </include>
+    
+     ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_3/model.sdf -entity qr_box_3 -x 1.8 -y 2.7 -z 0.125
+
+
+    <include>
+      <uri>model://qr_box_4</uri>
+      <pose>-1.8 2.7 0.125 0 0 0</pose>
+    </include>
+    
+     ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_4/model.sdf -entity qr_box_4 -x -1.8 -y 2.7 -z 0.125
+
+ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_1/model.sdf -entity qr_box_1 -x -1.8 -y -2.7 -z 0.125
+ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_2/model.sdf -entity qr_box_2 -x 1.8 -y -2.7 -z 0.125
+ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_3/model.sdf -entity qr_box_3 -x 1.8 -y 2.7 -z 0.125
+ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_4/model.sdf -entity qr_box_4 -x -1.8 -y 2.7 -z 0.125
+
+
+
+
+(빈 공간
+gazebo --verbose -s libgazebo_ros_factory.so /usr/share/gazebo-11/worlds/empty.world
+
+상자 소환
+ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_1/model.sdf -entity qr_box_1 -x 0 -y 0 -z 0
+
+상자 4개 소환
+ros2 launch tb3_security_system spawn_4_boxes.launch.py)
+
+
+--------------------------------------------------------------------------
+
+터틀봇3월드 1번 포인트
+
+At time 2364.72000000
+- Translation: [0.422, -1.278, 0.011]
+- Rotation: in Quaternion (xyzw) [-0.000, 0.000, -0.674, 0.738]
+- Rotation: in RPY (radian) [-0.000, 0.000, -1.480]
+- Rotation: in RPY (degree) [-0.001, 0.000, -84.805]
+- Matrix:
+  0.091  0.996  0.000  0.422
+ -0.996  0.091 -0.000 -1.278
+ -0.000 -0.000  1.000  0.011
+  0.000  0.000  0.000  1.000
+
+터틀봇3월드 2번 포인트
+
+At time 2474.232000000
+- Translation: [3.619, -1.280, 0.011]
+- Rotation: in Quaternion (xyzw) [0.001, -0.001, -0.708, 0.706]
+- Rotation: in RPY (radian) [0.002, 0.000, -1.574]
+- Rotation: in RPY (degree) [0.101, 0.007, -90.176]
+- Matrix:
+ -0.003  1.000 -0.002  3.619
+ -1.000 -0.003 -0.000 -1.280
+ -0.000  0.002  1.000  0.011
+  0.000  0.000  0.000  1.000
+
+
+터틀봇3월드 3번 포인트
+
+At time 2545.462000000
+- Translation: [3.634, 2.331, 0.010]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.699, 0.715]
+- Rotation: in RPY (radian) [0.001, 0.000, 1.549]
+- Rotation: in RPY (degree) [0.037, 0.001, 88.754]
+- Matrix:
+  0.022 -1.000  0.001  3.634
+  1.000  0.022  0.000  2.331
+ -0.000  0.001  1.000  0.010
+  0.000  0.000  0.000  1.000
+
+
+터틀봇3월드 4번 포인트
+
+At time 2605.642000000
+- Translation: [0.360, 2.322, 0.011]
+- Rotation: in Quaternion (xyzw) [-0.000, -0.000, 0.717, 0.697]
+- Rotation: in RPY (radian) [-0.001, 0.000, 1.598]
+- Rotation: in RPY (degree) [-0.046, 0.006, 91.565]
+- Matrix:
+ -0.027 -1.000 -0.001  0.360
+  1.000 -0.027  0.000  2.322
+ -0.000 -0.001  1.000  0.011
+  0.000  0.000  0.000  1.000
+
+
+터틀봇3월드 원점 A포인트
+
+At time 2713.796000000
+- Translation: [0.029, -0.006, 0.010]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, 0.000, 0.001]
+- Rotation: in RPY (degree) [0.000, 0.000, 0.035]
+- Matrix:
+  1.000 -0.001  0.000  0.029
+  0.001  1.000 -0.000 -0.006
+ -0.000  0.000  1.000  0.010
+  0.000  0.000  0.000  1.000
+  
+터틀봇3월드 원점 B포인트 
+
+  At time 2782.816000000
+- Translation: [0.022, 1.016, 0.010]
+- Rotation: in Quaternion (xyzw) [-0.001, 0.000, 0.006, 1.000]
+- Rotation: in RPY (radian) [-0.002, 0.000, 0.013]
+- Rotation: in RPY (degree) [-0.108, 0.015, 0.734]
+- Matrix:
+  1.000 -0.013  0.000  0.022
+  0.013  1.000  0.002  1.016
+ -0.000 -0.002  1.000  0.010
+  0.000  0.000  0.000  1.000
+
+
+
+

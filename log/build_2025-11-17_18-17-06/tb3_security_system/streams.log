@@ -1,0 +1,18 @@
+[0.520s] Invoking command in '/home/polestar3/ros2_ws/build/tb3_security_system': PYTHONPATH=/home/polestar3/ros2_ws/build/tb3_security_system/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/polestar3/ros2_ws/build/tb3_security_system/build --no-deps symlink_data
+[0.744s] running develop
+[0.912s] running egg_info
+[0.913s] writing tb3_security_system.egg-info/PKG-INFO
+[0.913s] writing dependency_links to tb3_security_system.egg-info/dependency_links.txt
+[0.913s] writing entry points to tb3_security_system.egg-info/entry_points.txt
+[0.913s] writing requirements to tb3_security_system.egg-info/requires.txt
+[0.913s] writing top-level names to tb3_security_system.egg-info/top_level.txt
+[0.914s] reading manifest file 'tb3_security_system.egg-info/SOURCES.txt'
+[0.915s] writing manifest file 'tb3_security_system.egg-info/SOURCES.txt'
+[0.916s] running build_ext
+[0.916s] Creating /home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages/tb3-security-system.egg-link (link to .)
+[0.917s] 
+[0.917s] Installed /home/polestar3/ros2_ws/build/tb3_security_system
+[0.917s] running symlink_data
+[0.917s] creating /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.917s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/spawn_4_boxes.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.934s] Invoked command in '/home/polestar3/ros2_ws/build/tb3_security_system' returned '0': PYTHONPATH=/home/polestar3/ros2_ws/build/tb3_security_system/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/polestar3/ros2_ws/build/tb3_security_system/build --no-deps symlink_data

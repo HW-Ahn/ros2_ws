@@ -1,0 +1,30 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='qr_box_4'>
+  <link name='link'>
+    <visual name='visual'>
+      <geometry>
+        <box>
+          <size>0.5 0.01 0.5</size> </box>
+      </geometry>
+      
+      <material>
+        <script>
+          <uri>file://media/materials/scripts/gazebo.material</uri>
+          <name>Gazebo/White</name> 
+        </script>
+        <texture>
+          <filename>file://$HOME/ros2_ws/src/tb3_security_system/resource/qr4.png</filename>
+        </texture>
+      </material>
+      </visual>
+    <collision name='collision'>
+      <geometry>
+        <box>
+          <size>0.5 0.01 0.5</size>
+        </box>
+      </geometry>
+    </collision>
+  </link>
+  <static>true</static> </model>
+</sdf>

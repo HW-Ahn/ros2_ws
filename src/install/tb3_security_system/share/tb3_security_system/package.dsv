@@ -1,0 +1,9 @@
+source;share/tb3_security_system/hook/pythonpath.ps1
+source;share/tb3_security_system/hook/pythonpath.dsv
+source;share/tb3_security_system/hook/pythonpath.sh
+source;share/tb3_security_system/hook/ament_prefix_path.ps1
+source;share/tb3_security_system/hook/ament_prefix_path.dsv
+source;share/tb3_security_system/hook/ament_prefix_path.sh
+source;../../build/tb3_security_system/share/tb3_security_system/hook/pythonpath_develop.ps1
+source;../../build/tb3_security_system/share/tb3_security_system/hook/pythonpath_develop.dsv
+source;../../build/tb3_security_system/share/tb3_security_system/hook/pythonpath_develop.sh
