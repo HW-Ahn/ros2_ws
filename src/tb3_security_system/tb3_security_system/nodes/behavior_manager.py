@@ -4,10 +4,10 @@ from std_msgs.msg import String, Bool
 from geometry_msgs.msg import PoseStamped, Twist
 
 QR_POSITIONS = {
-    1: (-2, -2.7),
-    2: (2, -2.7),
-    3: (2, 2.7),
-    4: (-2, 2.7),
+    1: (-2.0, -2.7),
+    2: (2.0, -2.7),
+    3: (2.0, 2.7),
+    4: (-2.0, 2.7),
 }
 
 
@@ -116,10 +116,25 @@ class BehaviorManager(Node):
     # 세부 동작 구현부
     # ---------------------------
     def send_goal_to_qr(self, idx: int):
-        # 목적지 좌표는 GUI 혹은 공용 config에서 받는 구조가 이상적
-        # 여기서는 ROS2 메시지를 발행하지 않고 로그만 출력
-        self.get_logger().info(f'[BM] Goal request → Go to QR {idx}')
-        # TODO: 실제 goal 포즈를 GUI에서 받거나 fixed map 좌표 만들어 사용 가능
+        if idx not in QR_POSITIONS:
+            self.get_logger().warn(f'[BM] QR{idx} 위치 정보가 정의되어 있지 않습니다.')
+            return
+
+        x, y = QR_POSITIONS[idx]
+
+        goal = PoseStamped()
+        goal.header.stamp = self.get_clock().now().to_msg()
+        goal.header.frame_id = 'map'  # 필요에 따라 'odom' 등으로 변경
+
+        goal.pose.position.x = x
+        goal.pose.position.y = y
+        goal.pose.position.z = 0.125
+
+        # 방향은 일단 기본(0도)로, 회전 없이 설정
+        goal.pose.orientation.w = 1.0
+
+        self.goal_pub.publish(goal)
+        self.get_logger().info(f'[BM] QR{idx}로 이동 목표 발행: x={x:.2f}, y={y:.2f}')
 
     def handle_qr_scan_next(self):
         self.get_logger().info(f'[BM] QR{self.current_qr} scan complete')
