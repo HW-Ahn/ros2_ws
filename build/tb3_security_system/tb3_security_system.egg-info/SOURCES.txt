@@ -15,3 +15,5 @@ tb3_security_system.egg-info/entry_points.txt
 tb3_security_system.egg-info/requires.txt
 tb3_security_system.egg-info/top_level.txt
 tb3_security_system.egg-info/zip-safe
+tb3_security_system/maps/my_map.pgm
+tb3_security_system/maps/my_map.yaml

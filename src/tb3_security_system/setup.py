@@ -13,6 +13,13 @@ setup(
         ('share/tb3_security_system', ['package.xml']),
         ('share/tb3_security_system/launch', glob('launch/*.launch.py')),
 
+        ('share/tb3_security_system/maps',
+            [
+                'tb3_security_system/maps/my_map.yaml',
+                'tb3_security_system/maps/my_map.pgm'
+            ]
+        ),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,

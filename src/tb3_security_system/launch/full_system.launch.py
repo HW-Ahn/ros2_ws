@@ -22,8 +22,6 @@ def generate_launch_description():
 
     nav2_params = PathJoinSubstitution([
         pkg_nav2,
-        'share',
-        'nav2_bringup',
         'params',
         'nav2_params.yaml'
     ])
@@ -48,7 +46,8 @@ def generate_launch_description():
             'use_sim_time': 'true',
             'autostart': 'true',
             'namespace': 'tb3_1',
-            'params_file': nav2_params
+            'params_file': nav2_params,
+            'map': PathJoinSubstitution([pkg_tb3, 'maps', 'my_map.yaml'])
         }.items()
     )
 
@@ -65,7 +64,8 @@ def generate_launch_description():
             'use_sim_time': 'true',
             'autostart': 'true',
             'namespace': 'tb3_2',
-            'params_file': nav2_params
+            'params_file': nav2_params,
+            'map': PathJoinSubstitution([pkg_tb3, 'maps', 'my_map.yaml'])
         }.items()
     )
 
