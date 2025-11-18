@@ -31,6 +31,7 @@ setup(
           'goal_manager = tb3_security_system.nodes.goal_manager:main',
           'obstacle_monitor = tb3_security_system.nodes.obstacle_monitor:main',
           'behavior_manager = tb3_security_system.nodes.behavior_manager:main',
+
           #'patrol_node = tb3_security_system.nodes.patrol_node:main'
 
 

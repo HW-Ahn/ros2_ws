@@ -1,6 +1,7 @@
 package.xml
 setup.cfg
 setup.py
+launch/gui_with_bm.launch.py
 launch/spawn_4_boxes.launch.py
 launch/spawn_world_and_boxes.launch.py
 resource/tb3_security_system

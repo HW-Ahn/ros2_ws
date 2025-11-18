@@ -86,6 +86,7 @@ class ControlBridge(Node):
             4: (-1.8,  2.2, -math.pi/2),
         }
 
+
     def send_high_level_cmd(self, robot: str, cmd: str):
         if robot not in self.cmd_pub:
             self.get_logger().error(f'Unknown robot {robot}')
@@ -118,9 +119,7 @@ class ControlBridge(Node):
         ps.pose.orientation.w = qw
 
         self.goal_pub[robot].publish(ps)
-        self.get_logger().info(
-            f'[{robot}] send_goal_to_qr{qr_index}: ({x:.2f},{y:.2f},{yaw:.2f})'
-        )
+        self.get_logger().info(f'[{robot}] send_goal_to_qr{qr_index}: ({x:.2f},{y:.2f},{yaw:.2f})')
 
     def send_manual_vel(self, robot: str, vx: float, vy: float, wz: float):
         if robot not in self.vel_pub:
@@ -151,7 +150,9 @@ class ControlBridge(Node):
         # 해당 로봇의 상태가 IDLE이면 카메라 갱신 안 함 (대기 중일 때는 부하 줄이기)
         if self.robot_state.get(robot, 'IDLE') == 'IDLE':
             return
+
         """
+
 
         # MainWindow에서 현재 어떤 로봇이 선택되어 있는지 확인
         active_robot = getattr(self.window, 'active_robot', None)
@@ -169,10 +170,7 @@ class ControlBridge(Node):
         # OpenCV BGR → Qt QImage
         h, w, ch = cv_img.shape
         bytes_per_line = ch * w
-        qt_img = QImage(
-            cv_img.data, w, h, bytes_per_line,
-            QImage.Format.Format_BGR888
-        )
+        qt_img = QImage(cv_img.data, w, h, bytes_per_line, QImage.Format.Format_BGR888)
 
         # Qt 스레드에서 QLabel 업데이트 (QueuedConnection)
         self.window.update_camera(robot, qt_img)
@@ -182,26 +180,12 @@ class MainWindow(QtWidgets.QDialog):
     def __init__(self, bridge: ControlBridge):
         super().__init__()
         # UI 파일 로드
-        uic.loadUi(
-            '/home/polestar3/ros2_ws/src/tb3_security_system/ui/tb3_control.ui',
-            self
-        )
+        uic.loadUi('/home/polestar3/ros2_ws/src/tb3_security_system/ui/tb3_control.ui', self)
 
         self.bridge = bridge
         self.active_robot = 'tb3_1'  # 기본 선택 로봇
 
-        # ---------------------- ★ 스케일링용 초기값 저장 ★ ----------------------
-        # 기준 크기(디자이너에서 만든 원래 폼 크기)
-        self._base_size = self.size()
-        # 모든 자식 위젯의 원래 geometry 기록
-        self._orig_geometries = {}
-        for w in self.findChildren(QtWidgets.QWidget):
-            if w is self:
-                continue
-            self._orig_geometries[w] = w.geometry()
-        # ----------------------------------------------------------------------
-
-        # 상단에 현재 로봇 표시용 라벨
+        # 상단에 현재 로봇 표시용 라벨 추가
         if hasattr(self, 'label_active'):
             self.label_active.setText(self.active_robot)
 
@@ -231,7 +215,7 @@ class MainWindow(QtWidgets.QDialog):
         # 정선순찰 (btn_start를 재활용)
         self.btn_start.clicked.connect(self.on_seq_patrol)
 
-        # 난선순찰/복귀 버튼은 UI에 있다고 가정
+        # 난선순찰/복귀 버튼은 UI에 추가하셨다고 가정 (objectName: btn_patrol_random, btn_return)
         if hasattr(self, 'btn_patrol_random'):
             self.btn_patrol_random.clicked.connect(self.on_random_patrol)
         if hasattr(self, 'btn_return'):
@@ -242,49 +226,18 @@ class MainWindow(QtWidgets.QDialog):
         self.btn_stop.clicked.connect(self.close)
 
         # 방향 버튼: pressed / released 사용
-        self.btn_up.pressed.connect(
-            lambda: self.set_manual_cmd(0.1, 0.0, 0.0)
-        )
-        self.btn_down.pressed.connect(
-            lambda: self.set_manual_cmd(-0.1, 0.0, 0.0)
-        )
-        self.btn_left.pressed.connect(
-            lambda: self.set_manual_cmd(0.0, 0.0, 0.5)
-        )
-        self.btn_right.pressed.connect(
-            lambda: self.set_manual_cmd(0.0, 0.0, -0.5)
-        )
+        self.btn_up.pressed.connect(lambda: self.set_manual_cmd(0.1, 0.0, 0.0))
+        self.btn_down.pressed.connect(lambda: self.set_manual_cmd(-0.1, 0.0, 0.0))
+        self.btn_left.pressed.connect(lambda: self.set_manual_cmd(0.0, 0.0, 0.5))
+        self.btn_right.pressed.connect(lambda: self.set_manual_cmd(0.0, 0.0, -0.5))
 
         self.btn_up.released.connect(self.stop_manual_cmd)
         self.btn_down.released.connect(self.stop_manual_cmd)
         self.btn_left.released.connect(self.stop_manual_cmd)
         self.btn_right.released.connect(self.stop_manual_cmd)
 
-        # 카메라 레이블 (원본 비율 유지)
         self.label_cam1.setScaledContents(True)
         self.label_cam2.setScaledContents(True)
-
-    # ---------------------- ★ 창 리사이즈 시 전체 스케일링 ★ ----------------------
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if not self._base_size.width() or not self._base_size.height():
-            return
-
-        # 가로/세로 비율 계산
-        sx = self.width() / self._base_size.width()
-        sy = self.height() / self._base_size.height()
-        # 한쪽이 너무 찌그러지지 않도록 더 작은 쪽 기준으로 스케일
-        s = min(sx, sy)
-
-        for w, g in self._orig_geometries.items():
-            new_rect = QtCore.QRect(
-                int(g.x() * s),
-                int(g.y() * s),
-                int(g.width() * s),
-                int(g.height() * s),
-            )
-            w.setGeometry(new_rect)
-    # ----------------------------------------------------------------------
 
     # ------------------------
     # 내부 유틸
@@ -375,12 +328,17 @@ class MainWindow(QtWidgets.QDialog):
         pix = QPixmap.fromImage(img)
 
         if robot == 'tb3_1':
+            # tb3_1 화면만 표시, tb3_2 화면은 지우기
             if hasattr(self, 'label_cam1'):
                 self.label_cam1.setPixmap(pix)
+            # if hasattr(self, 'label_cam2'):
+            #     self.label_cam2.clear()
         elif robot == 'tb3_2':
+            # tb3_2 화면만 표시, tb3_1 화면은 지우기
             if hasattr(self, 'label_cam2'):
                 self.label_cam2.setPixmap(pix)
-
+            # if hasattr(self, 'label_cam1'):
+            #     self.label_cam1.clear()
 
 # ------------------------
 # rclpy 스레드 + Qt 실행

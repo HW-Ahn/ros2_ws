@@ -41,7 +41,7 @@ def generate_launch_description():
     return LaunchDescription([
         gazebo,
         TimerAction(period=1.5, actions=[
-            spawn_box_node('qr_box_1', '/home/polestar3/.gazebo/models/qr_box_1/model.sdf', -1.8, -2.7, 0.125),
+            spawn_box_node('qr_box', '/home/polestar3/.gazebo/models/qr_box/model.sdf', -1.8, -2.7, 0.125),
             spawn_box_node('qr_box_2', '/home/polestar3/.gazebo/models/qr_box_2/model.sdf',  1.8, -2.7, 0.125),
             spawn_box_node('qr_box_3', '/home/polestar3/.gazebo/models/qr_box_3/model.sdf',  1.8,  2.7, 0.125),
             spawn_box_node('qr_box_4', '/home/polestar3/.gazebo/models/qr_box_4/model.sdf', -1.8,  2.7, 0.125),
