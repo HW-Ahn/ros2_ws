@@ -1,0 +1,23 @@
+[0.559s] Invoking command in '/home/polestar3/ros2_ws/build/tb3_security_system': PYTHONPATH=/home/polestar3/ros2_ws/build/tb3_security_system/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/polestar3/ros2_ws/build/tb3_security_system/build --no-deps symlink_data
+[0.804s] running develop
+[0.991s] running egg_info
+[0.991s] writing tb3_security_system.egg-info/PKG-INFO
+[0.992s] writing dependency_links to tb3_security_system.egg-info/dependency_links.txt
+[0.992s] writing entry points to tb3_security_system.egg-info/entry_points.txt
+[0.992s] writing requirements to tb3_security_system.egg-info/requires.txt
+[0.992s] writing top-level names to tb3_security_system.egg-info/top_level.txt
+[0.994s] reading manifest file 'tb3_security_system.egg-info/SOURCES.txt'
+[0.994s] writing manifest file 'tb3_security_system.egg-info/SOURCES.txt'
+[0.996s] running build_ext
+[0.996s] Creating /home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages/tb3-security-system.egg-link (link to .)
+[0.996s] Installing behavior_manager script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.997s] Installing goal_manager script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.997s] Installing gui_main script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.997s] Installing obstacle_monitor script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.997s] Installing simple_navigator script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.997s] 
+[0.997s] Installed /home/polestar3/ros2_ws/build/tb3_security_system
+[0.997s] running symlink_data
+[0.997s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/real_two_robots.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.998s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/sim_two_robots.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[1.016s] Invoked command in '/home/polestar3/ros2_ws/build/tb3_security_system' returned '0': PYTHONPATH=/home/polestar3/ros2_ws/build/tb3_security_system/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/polestar3/ros2_ws/build/tb3_security_system/build --no-deps symlink_data
