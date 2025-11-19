@@ -1,1 +1,0 @@
-/home/polestar3/ros2_ws/src/tb3_security_system/launch/gui_with_bm.launch.py

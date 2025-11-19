@@ -28,7 +28,12 @@ def generate_launch_description():
     gui_node = Node(
         package='tb3_security_system',
         executable='gui_main',
-        output='screen'
+        output='screen',
+        parameters=[{
+            'use_compressed': True,
+            'robot1_image_topic': '/tb15/image_raw/compressed',
+            'robot2_image_topic': '/tb16/image_raw/compressed'
+        }]
     )
 
     return LaunchDescription([

@@ -88,7 +88,8 @@ def generate_launch_description():
     gui_node = Node(
         package='tb3_security_system',
         executable='gui_main',
-        output='screen'
+        output='screen',
+        parameters=[{'use_compressed': False}]
     )
 
     # 7. LaunchDescription (순서/딜레이 조절)

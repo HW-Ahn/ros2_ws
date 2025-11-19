@@ -1,0 +1,41 @@
+[0.552s] Invoking command in '/home/polestar3/ros2_ws/build/tb3_security_system': PYTHONPATH=/home/polestar3/ros2_ws/build/tb3_security_system/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/polestar3/ros2_ws/build/tb3_security_system/build --no-deps symlink_data
+[0.789s] running develop
+[0.980s] running egg_info
+[0.980s] creating tb3_security_system.egg-info
+[0.980s] writing tb3_security_system.egg-info/PKG-INFO
+[0.980s] writing dependency_links to tb3_security_system.egg-info/dependency_links.txt
+[0.980s] writing entry points to tb3_security_system.egg-info/entry_points.txt
+[0.980s] writing requirements to tb3_security_system.egg-info/requires.txt
+[0.980s] writing top-level names to tb3_security_system.egg-info/top_level.txt
+[0.980s] writing manifest file 'tb3_security_system.egg-info/SOURCES.txt'
+[0.982s] reading manifest file 'tb3_security_system.egg-info/SOURCES.txt'
+[0.983s] writing manifest file 'tb3_security_system.egg-info/SOURCES.txt'
+[0.986s] running build_ext
+[0.986s] Creating /home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages/tb3-security-system.egg-link (link to .)
+[0.987s] Installing behavior_manager script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.987s] Installing goal_manager script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.987s] Installing gui_main script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.987s] Installing obstacle_monitor script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.987s] Installing simple_navigator script to /home/polestar3/ros2_ws/install/tb3_security_system/lib/tb3_security_system
+[0.988s] 
+[0.988s] Installed /home/polestar3/ros2_ws/build/tb3_security_system
+[0.988s] running symlink_data
+[0.988s] creating /home/polestar3/ros2_ws/install/tb3_security_system/share/ament_index
+[0.988s] creating /home/polestar3/ros2_ws/install/tb3_security_system/share/ament_index/resource_index
+[0.988s] creating /home/polestar3/ros2_ws/install/tb3_security_system/share/ament_index/resource_index/packages
+[0.988s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/resource/tb3_security_system -> /home/polestar3/ros2_ws/install/tb3_security_system/share/ament_index/resource_index/packages
+[0.988s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/package.xml -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system
+[0.988s] creating /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.988s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/spawn_4_boxes.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/real_two_robots.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/spawn_world_and_boxes.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/full_system.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/b_mode_two_robots.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/sim_two_robots.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/nav2_slam_tb3.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/slam_tb3_1.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/launch/gui_with_bm.launch.py -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/launch
+[0.989s] creating /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/maps
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/tb3_security_system/maps/my_map.yaml -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/maps
+[0.989s] symbolically linking /home/polestar3/ros2_ws/build/tb3_security_system/tb3_security_system/maps/my_map.pgm -> /home/polestar3/ros2_ws/install/tb3_security_system/share/tb3_security_system/maps
+[1.025s] Invoked command in '/home/polestar3/ros2_ws/build/tb3_security_system' returned '0': PYTHONPATH=/home/polestar3/ros2_ws/build/tb3_security_system/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/polestar3/ros2_ws/install/tb3_security_system/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/polestar3/ros2_ws/build/tb3_security_system/build --no-deps symlink_data
