@@ -48,8 +48,8 @@ def generate_launch_description():
         ]),
         # spawn two robots (names tb3_1, tb3_2)
         TimerAction(period=2.5, actions=[
-            spawn_robot('tb3_1', '/opt/ros/humble/share/turtlebot3_gazebo/models/turtlebot3_burger_cam/model.sdf', 0.0, 0.0, 0.0),
-            spawn_robot('tb3_2', '/opt/ros/humble/share/turtlebot3_gazebo/models/turtlebot3_burger_cam/model.sdf', 0.6, 0.0, 0.0),
+            spawn_robot('tb3_1', '/opt/ros/humble/share/turtlebot3_gazebo/models/turtlebot3_burger_cam/model.sdf', -2.4, -0.4, 0.0),
+            spawn_robot('tb3_2', '/opt/ros/humble/share/turtlebot3_gazebo/models/turtlebot3_burger_cam/model.sdf', -2.4, 0.4, 0.0),
         ]),
         # after robots spawned, start goal_manager and obstacle_monitor under each namespace
         TimerAction(period=5.0, actions=[

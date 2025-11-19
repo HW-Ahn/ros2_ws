@@ -1,5 +1,6 @@
 from setuptools import find_packages, setup
 from glob import glob
+import os
 
 package_name = 'tb3_security_system'
 
@@ -12,7 +13,7 @@ setup(
             ['resource/tb3_security_system']),
         ('share/tb3_security_system', ['package.xml']),
         ('share/tb3_security_system/launch', glob('launch/*.launch.py')),
-
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         ('share/tb3_security_system/maps',
             [
                 'tb3_security_system/maps/my_map.yaml',
@@ -25,7 +26,7 @@ setup(
     zip_safe=True,
     maintainer='polestar3',
     maintainer_email='polestar3@todo.todo',
-    description='TODO: Package description',
+    description='TB3 Security System with Handover',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -38,7 +39,7 @@ setup(
           'goal_manager = tb3_security_system.nodes.goal_manager:main',
           'obstacle_monitor = tb3_security_system.nodes.obstacle_monitor:main',
           'behavior_manager = tb3_security_system.nodes.behavior_manager:main',
-
+          'simple_navigator = tb3_security_system.nodes.simple_navigator:main',
           #'patrol_node = tb3_security_system.nodes.patrol_node:main'
 
 

@@ -2,15 +2,15 @@
       <uri>model://qr_box_1</uri>
       <pose>-1.8 -2.7 0.125 0 0 0</pose>
     </include>
-    
-     ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_1/model.sdf -entity qr_box_1 -x -1.8 -y -2.7 -z 0.125
+
+     ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box/model.sdf -entity qr_box -x -1.8 -y -2.7 -z 0.125
 
 
     <include>
       <uri>model://qr_box_2</uri>
-      <pose>1.8 -2.7 0.125 0 0 0</pose>
+      <pose>-1.8 2.7 0.125 0 0 0</pose>
     </include>
-    
+
      ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_2/model.sdf -entity qr_box_2 -x 1.8 -y -2.7 -z 0.125
 
 
@@ -18,15 +18,15 @@
       <uri>model://qr_box_3</uri>
       <pose>1.8 2.7 0.125 0 0 0</pose>
     </include>
-    
+
      ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_3/model.sdf -entity qr_box_3 -x 1.8 -y 2.7 -z 0.125
 
 
     <include>
       <uri>model://qr_box_4</uri>
-      <pose>-1.8 2.7 0.125 0 0 0</pose>
+      <pose>1.8 -2.7 0.125 0 0 0</pose>
     </include>
-    
+
      ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_4/model.sdf -entity qr_box_4 -x -1.8 -y 2.7 -z 0.125
 
 ros2 run gazebo_ros spawn_entity.py -file ~/.gazebo/models/qr_box_1/model.sdf -entity qr_box_1 -x -1.8 -y -2.7 -z 0.125
@@ -116,8 +116,8 @@ At time 2713.796000000
   0.001  1.000 -0.000 -0.006
  -0.000  0.000  1.000  0.010
   0.000  0.000  0.000  1.000
-  
-터틀봇3월드 원점 B포인트 
+
+터틀봇3월드 원점 B포인트
 
   At time 2782.816000000
 - Translation: [0.022, 1.016, 0.010]

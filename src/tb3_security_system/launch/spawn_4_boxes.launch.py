@@ -4,7 +4,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     boxes = [
-        ("qr_box_1", "/home/polestar3/.gazebo/models/qr_box_1/model.sdf", -1.8, -2.7, 0.125),
+        ("qr_box", "/home/polestar3/.gazebo/models/qr_box/model.sdf", -1.8, -2.7, 0.125),
         ("qr_box_2", "/home/polestar3/.gazebo/models/qr_box_2/model.sdf", 1.8, -2.7, 0.125),
         ("qr_box_3", "/home/polestar3/.gazebo/models/qr_box_3/model.sdf", 1.8, 2.7, 0.125),
         ("qr_box_4", "/home/polestar3/.gazebo/models/qr_box_4/model.sdf", -1.8, 2.7, 0.125),

@@ -1,3 +1,4 @@
+import os
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -5,110 +6,60 @@ from launch_ros.actions import Node
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
-
 def generate_launch_description():
-
-    # -------------------------------
-    # 경로 설정
-    # -------------------------------
     pkg_tb3 = FindPackageShare('tb3_security_system')
-    pkg_nav2 = FindPackageShare('nav2_bringup')
 
+    # -------------------------------
+    # 1. Gazebo 월드 + TurtleBot3 2대 스폰
+    # -------------------------------
+    # spawn_world_and_boxes.launch.py가 /tb3_1, /tb3_2를 스폰한다고 가정
     world_launch = PathJoinSubstitution([
         pkg_tb3,
         'launch',
         'spawn_world_and_boxes.launch.py'
     ])
 
-    nav2_params = PathJoinSubstitution([
-        pkg_nav2,
-        'params',
-        'nav2_params.yaml'
-    ])
-
-    # -------------------------------
-    # Gazebo + TurtleBot3 2대 스폰
-    # -------------------------------
     gazebo_and_spawn = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(world_launch)
     )
 
-    # -------------------------------
-    # Nav2 bringup for tb3_1
-    # -------------------------------
-    nav2_tb3_1 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([
-            pkg_nav2,
-            'launch',
-            'bringup_launch.py'
-        ])),
-        launch_arguments={
-            'use_sim_time': 'true',
-            'autostart': 'true',
-            'namespace': 'tb3_1',
-            'params_file': nav2_params,
-            'map': PathJoinSubstitution([pkg_tb3, 'maps', 'my_map.yaml'])
-        }.items()
-    )
+    nodes = [gazebo_and_spawn]
 
     # -------------------------------
-    # Nav2 bringup for tb3_2
+    # 2. 각 로봇 별 노드 실행 (Nav2 제거 -> simple_navigator 추가)
     # -------------------------------
-    nav2_tb3_2 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([
-            pkg_nav2,
-            'launch',
-            'bringup_launch.py'
-        ])),
-        launch_arguments={
-            'use_sim_time': 'true',
-            'autostart': 'true',
-            'namespace': 'tb3_2',
-            'params_file': nav2_params,
-            'map': PathJoinSubstitution([pkg_tb3, 'maps', 'my_map.yaml'])
-        }.items()
-    )
+    # tb3_1, tb3_2 각각에 대해 behavior_manager와 simple_navigator를 띄웁니다.
+
+    for ns in ['tb3_1', 'tb3_2']:
+        # (1) Behavior Manager: GUI 명령 수신 및 상태 관리
+        nodes.append(Node(
+            package='tb3_security_system',
+            executable='behavior_manager',
+            namespace=ns,
+            output='screen',
+            parameters=[{'use_sim_time': True}]
+        ))
+
+        # (2) Simple Navigator: cmd_goal을 받아 실제 주행 담당 (Nav2 대체)
+        nodes.append(Node(
+            package='tb3_security_system',
+            executable='simple_navigator',
+            namespace=ns,
+            output='screen',
+            parameters=[{'use_sim_time': True}]
+        ))
 
     # -------------------------------
-    # BehaviorManager for tb3_1
+    # 3. GUI 실행
     # -------------------------------
-    behavior_tb3_1 = Node(
-        package='tb3_security_system',
-        executable='behavior_manager',
-        namespace='tb3_1',
-        output='screen',
-        parameters=[{'use_sim_time': True}]
-    )
-
-    # -------------------------------
-    # BehaviorManager for tb3_2
-    # -------------------------------
-    behavior_tb3_2 = Node(
-        package='tb3_security_system',
-        executable='behavior_manager',
-        namespace='tb3_2',
-        output='screen',
-        parameters=[{'use_sim_time': True}]
-    )
-
-    # -------------------------------
-    # GUI 실행
-    # -------------------------------
+    # GUI는 로봇 네임스페이스 밖에서 실행되지만,
+    # 내부적으로 /tb3_1/high_level_cmd 등을 발행해야 합니다.
     gui_node = Node(
         package='tb3_security_system',
-        executable='gui_main',
+        executable='gui_main', # setup.py에 등록된 이름 확인 필요 (tb3_gui.py)
         output='screen',
         parameters=[{'use_sim_time': True}]
     )
+    nodes.append(gui_node)
 
-    # -------------------------------
-    # Launch Description 반환
-    # -------------------------------
-    return LaunchDescription([
-        gazebo_and_spawn,
-        nav2_tb3_1,
-        nav2_tb3_2,
-        behavior_tb3_1,
-        behavior_tb3_2,
-        gui_node
-    ])
+    return LaunchDescription(nodes)
