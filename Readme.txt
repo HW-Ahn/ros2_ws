@@ -52,6 +52,7 @@ ros2 launch tb3_security_system sim_two_robots.launch.py
 
 실제 2로봇
 각각
+ssh ubuntu@192.168.40.15
 export TURTLEBOT3_MODEL=burger
 ros2 launch turtlebot3_bringup robot.launch.py namespace:=tb3_1
 
@@ -77,6 +78,7 @@ ros2 run tb3_security_system simple_navigator --ros-args -r __ns:=/tb3_1
   pkill -9 gazebo
   pkill -9 gzserver
   pkill -9 gzclient
+  
 - 혹시 남아 있는 ROS 노드도 종료
   pkill -9 python3
 - 현재 DDS 통신 초기화

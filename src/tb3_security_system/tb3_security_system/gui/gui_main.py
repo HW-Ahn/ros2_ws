@@ -95,10 +95,10 @@ class ControlBridge(Node):
         # ---------- QR 포인트 좌표 ----------
         # 1~4번 박스 앞 좌표 (필요시 조정)
         self.qr_points = {
-            1: (-1.8, -2.2, 0.0),
-            2: (1.8, -2.2, math.pi),
-            3: (1.8, 2.2, math.pi / 2),
-            4: (-1.8, 2.2, -math.pi / 2),
+            1: ( 1.4, -1.5, -math.pi / 2.0),
+            2: ( 4.7, -1.15, -math.pi / 2.2),
+            3: ( 4.2,  2.4,  math.pi / 2.0),
+            4: ( 0.7, 2.0,  math.pi / 2.0),
         }
 
         self.get_logger().info("ControlBridge initialized")
