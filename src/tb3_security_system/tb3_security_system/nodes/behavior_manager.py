@@ -9,6 +9,7 @@ from std_msgs.msg import String, Bool, Int32
 from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
 from turtlebot3_msgs.srv import Sound
+from sensor_msgs.msg import LaserScan
 
 
 def yaw_to_quat(yaw: float):
@@ -22,7 +23,7 @@ class BehaviorManager(Node):
         super().__init__("behavior_manager")
 
         # 네임스페이스 (/tb3_1, /tb3_2 ...)
-        ns = self.get_namespace().strip('/')   # ★ 오타 수정(stㅁrip -> strip)
+        ns = self.get_namespace().strip('/')
         self.robot_ns = ns if ns else "tb3_1"
         self.is_primary = (self.robot_ns == "tb3_1")
 
@@ -42,6 +43,22 @@ class BehaviorManager(Node):
             3: (4.4,  2.0,  math.pi / 2.0),
             4: (1.0,  2.0,  math.pi / 2.0),  # 수정된 QR4
         }
+
+        # ---------- 장애물 모니터링 파라미터 ----------
+        # monitor_angle_deg: 감지 각도(정면 기준, 기본 ±32.5도 = 기존 30도에서 좌우 +2.5도 확장 가정)
+        self.declare_parameter('monitor_angle_deg', 32.5)
+        self.declare_parameter('monitor_distance', 0.7)     # 이 거리 안으로 들어오면 위험
+        self.declare_parameter('monitor_hit_count', 5)      # 연속 n번 감지 시 알람
+
+        self.monitor_angle = math.radians(
+            float(self.get_parameter('monitor_angle_deg').value)
+        )
+        self.monitor_distance = float(self.get_parameter('monitor_distance').value)
+        self.monitor_hit_needed = int(self.get_parameter('monitor_hit_count').value)
+
+        self.monitor_hit_count = 0
+        self.monitor_prev_min = None
+        self.last_scan = None
 
         # ---------- Publisher / Subscriber ----------
         self.state_pub = self.create_publisher(String, 'state', 10)
@@ -64,6 +81,10 @@ class BehaviorManager(Node):
         )
         self.alarm_sub = self.create_subscription(
             Bool, 'alarm_event', self.alarm_cb, 10
+        )
+        # LiDAR 스캔 구독 (움직이는 장애물 모니터용)
+        self.scan_sub = self.create_subscription(
+            LaserScan, 'scan', self.scan_cb, 10
         )
 
         # ---------- 부저 서비스 클라이언트 ----------
@@ -202,6 +223,77 @@ class BehaviorManager(Node):
         self.get_logger().info("[BM] RETURN_HOME 시작")
 
     # ============================================================
+    # LiDAR 기반 움직이는 장애물 모니터링
+    # ============================================================
+    def scan_cb(self, msg: LaserScan):
+        """정면 ±monitor_angle 범위 안에서 가까운 장애물을 감지.
+        - 일정 거리 안에 연속적으로 들어오면 '움직이는 장애물'로 보고 BUZZER 동작 실행
+        """
+        self.last_scan = msg
+
+        # E-STOP 이나 이미 BUZZER 모드면 추가 감지 안 함
+        if self.current_mode in ["E_STOP", "BUZZER"]:
+            self.monitor_hit_count = 0
+            return
+
+        angle_min = msg.angle_min
+        angle_inc = msg.angle_increment
+        ranges = msg.ranges
+
+        min_front = float('inf')
+
+        # LiDAR 기준 0rad가 정면이라고 가정하고, ±monitor_angle 범위만 검사
+        for i, r in enumerate(ranges):
+            # 0.0, 유효 범위 밖, inf/nan 값은 모두 무시
+            if (
+                r == 0.0
+                or math.isinf(r)
+                or math.isnan(r)
+                or r < msg.range_min
+                or r > msg.range_max
+            ):
+                continue
+
+            angle = angle_min + i * angle_inc
+            # -pi ~ pi 로 정규화
+            rel = self.normalize_angle(angle)
+
+            if -self.monitor_angle <= rel <= self.monitor_angle:
+                if r < min_front:
+                    min_front = r
+
+        if min_front < float('inf'):
+            # 가까운 장애물이 감지됨
+            if min_front < self.monitor_distance:
+                self.monitor_hit_count += 1
+            else:
+                # 감지는 되지만 아직 위험 거리 밖이면 카운트 서서히 감소
+                if self.monitor_hit_count > 0:
+                    self.monitor_hit_count -= 1
+        else:
+            # 아무것도 안 보이면 카운트 감소
+            if self.monitor_hit_count > 0:
+                self.monitor_hit_count -= 1
+
+        # 연속 감지 횟수가 기준을 넘으면 BUZZER 동작
+        if self.monitor_hit_count >= self.monitor_hit_needed:
+            self.get_logger().warn(
+                f"[BM] 움직이는 장애물 감지: min_front={min_front:.2f} m → BUZZER 동작"
+            )
+            self.monitor_hit_count = 0
+            self.start_buzzer_rotation()
+
+        # 이전 최소 거리 저장 (원하면 여기서 거리 변화량으로 더 정교하게 '움직임' 판별 가능)
+        self.monitor_prev_min = min_front if min_front < float('inf') else None
+
+    def normalize_angle(self, a: float) -> float:
+        while a > math.pi:
+            a -= 2.0 * math.pi
+        while a < -math.pi:
+            a += 2.0 * math.pi
+        return a
+
+    # ============================================================
     # 부저 반복 + 1바퀴 회전
     # ============================================================
     def start_buzzer_rotation(self):
@@ -304,11 +396,11 @@ class BehaviorManager(Node):
         self.get_logger().info(f"[HANDOVER] received last_qr={msg.data}")
 
     # ============================================================
-    # 장애물 감지 이벤트 (필요시 외부에서 alarm_event 발행)
+    # 장애물 감지 이벤트 (외부 obstacle_monitor 노드에서 alarm_event 발행 시)
     # ============================================================
     def alarm_cb(self, msg: Bool):
         if msg.data:
-            self.get_logger().warn("Moving obstacle detected -> BUZZER behavior")
+            self.get_logger().warn("Moving obstacle detected (external) -> BUZZER behavior")
             self.start_buzzer_rotation()
 
     # ============================================================
