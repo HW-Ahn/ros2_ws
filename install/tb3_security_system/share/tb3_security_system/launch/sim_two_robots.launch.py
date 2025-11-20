@@ -1,1 +1,0 @@
-/home/polestar3/ros2_ws/build/tb3_security_system/launch/sim_two_robots.launch.py

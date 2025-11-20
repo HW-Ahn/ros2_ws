@@ -1,13 +1,12 @@
 Metadata-Version: 2.1
 Name: tb3-security-system
 Version: 0.0.0
-Summary: TB3 Security System with Handover
+Summary: TB3 Security System
 Home-page: UNKNOWN
 Maintainer: polestar3
 Maintainer-email: polestar3@todo.todo
-License: TODO: License declaration
+License: Apache License 2.0
 Platform: UNKNOWN
-Provides-Extra: test
 
 UNKNOWN
 

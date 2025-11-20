@@ -2,12 +2,8 @@ package.xml
 setup.cfg
 setup.py
 launch/b_mode_two_robots.launch.py
-launch/full_system.launch.py
 launch/gui_with_bm.launch.py
-launch/nav2_slam_tb3.launch.py
-launch/real_two_robots.launch.py
-launch/sim_two_robots.launch.py
-launch/slam_tb3_1.launch.py
+launch/real_one_robot.launch.py
 launch/spawn_4_boxes.launch.py
 launch/spawn_world_and_boxes.launch.py
 resource/tb3_security_system

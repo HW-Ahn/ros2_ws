@@ -3,5 +3,9 @@ behavior_manager = tb3_security_system.nodes.behavior_manager:main
 goal_manager = tb3_security_system.nodes.goal_manager:main
 gui_main = tb3_security_system.gui.gui_main:main
 obstacle_monitor = tb3_security_system.nodes.obstacle_monitor:main
+qr_scanner = tb3_security_system.nodes.qr_scanner:main
+random_patrol = tb3_security_system.nodes.random_patrol:main
+return_home = tb3_security_system.nodes.return_home:main
+seq_patrol = tb3_security_system.nodes.seq_patrol:main
 simple_navigator = tb3_security_system.nodes.simple_navigator:main
 

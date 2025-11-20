@@ -1,1 +1,0 @@
-/home/polestar3/ros2_ws/src/build/tb3_security_system/launch/b_mode_two_robots.launch.py

@@ -1,46 +1,83 @@
-# 파일: ros2_ws/src/tb3_security_system/tb3_security_system/nodes/obstacle_monitor.py
+# 파일: tb3_security_system/nodes/obstacle_monitor.py
+
+import math
+
 import rclpy
 from rclpy.node import Node
+
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Bool
-from geometry_msgs.msg import Twist
+
 
 class ObstacleMonitor(Node):
     def __init__(self):
         super().__init__('obstacle_monitor')
-        self.scan_sub = self.create_subscription(LaserScan, 'scan', self.scan_cb, 10)
+
+        # 네임스페이스 기반으로 동작 (tb3_1, tb3_2 모두 재사용할 수 있게)
+        ns = self.get_namespace().strip('/')
+        self.robot_ns = ns if ns else 'tb3_1'
+
+        # 전방 장애물 거리 임계값 (m)
+        self.front_threshold = 0.5
+
+        # 얼마나 넓은 각도를 "정면"으로 볼지 (rad)
+        self.front_angle = math.radians(60.0)  # ±30도
+
+        # alarm_event 퍼블리셔 (BehaviorManager 가 구독)
         self.alarm_pub = self.create_publisher(Bool, 'alarm_event', 10)
-        self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
-        self.prev_min = None
-        self.get_logger().info('ObstacleMonitor ready')
+
+        # LaserScan 구독
+        # 실제 토픽 이름은 ros2 topic list | grep scan 으로 확인해서 맞춰주세요.
+        # 예: /tb3_1/scan 또는 /scan
+        scan_topic = 'scan'   # 네임스페이스 안에서 상대 경로로 사용
+        self.scan_sub = self.create_subscription(
+            LaserScan, scan_topic, self.scan_cb, 10
+        )
+
+        self.get_logger().info(
+            f'ObstacleMonitor started for {self.robot_ns}, scan_topic={scan_topic}'
+        )
 
     def scan_cb(self, msg: LaserScan):
-        # 간단한 히스토리: 현재 최소거리와 이전 최소거리 차이로 "움직이는 장애물" 판단
-        # 동작 조건: 최소거리 < 0.6m 이고 이전 값 - 현재 값 > 0.2 (갑작스럽게 다가옴) => moving
-        valid_ranges = [r for r in msg.ranges if r > msg.range_min and r < msg.range_max]
-        if not valid_ranges:
-            return
-        cur_min = min(valid_ranges)
-        if self.prev_min is not None:
-            if cur_min < 0.6 and (self.prev_min - cur_min) > 0.15:
-                # moving obstacle detected
-                self.get_logger().warn('Moving obstacle detected -> publish alarm_event True')
-                self.alarm_pub.publish(Bool(data=True))
-                # additionally, publish a small rotation command for immediate feedback (optional)
-                twist = Twist()
-                twist.angular.z = -1.0  # 시계 방향
-                self.cmd_vel_pub.publish(twist)
-                return
-        # no moving obstacle
-        self.prev_min = cur_min
+        # LaserScan 의 각도 범위: [angle_min, angle_max], 증분 angle_increment
+        angle = msg.angle_min
+        min_dist_front = float('inf')
+
+        for r in msg.ranges:
+            # 유효하지 않은 값은 건너뛰기
+            if math.isnan(r) or math.isinf(r):
+                angle += msg.angle_increment
+                continue
+
+            # 정면 ±front_angle 안에 있는 빔만 확인
+            if abs(angle) <= self.front_angle:
+                if r < min_dist_front:
+                    min_dist_front = r
+
+            angle += msg.angle_increment
+
+        # 장애물 여부 판단
+        alarm = Bool()
+        if min_dist_front < self.front_threshold:
+            alarm.data = True
+            self.get_logger().warn(
+                f'Front obstacle detected: {min_dist_front:.2f} m'
+            )
+        else:
+            alarm.data = False
+
+        self.alarm_pub.publish(alarm)
+
 
 def main(args=None):
-  rclpy.init(args=args)
-  node = ObstacleMonitor()  # 클래스 이름에 맞게 수정
-  rclpy.spin(node)
-  node.destroy_node()
-  rclpy.shutdown()
+    rclpy.init(args=args)
+    node = ObstacleMonitor()
+    try:
+        rclpy.spin(node)
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
 
 if __name__ == '__main__':
-  main()
-
+    main()
