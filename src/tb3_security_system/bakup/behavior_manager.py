@@ -8,8 +8,8 @@ from rclpy.node import Node
 from std_msgs.msg import String, Bool, Int32
 from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import LaserScan
 from turtlebot3_msgs.srv import Sound
+from sensor_msgs.msg import LaserScan
 
 
 def yaw_to_quat(yaw: float):
@@ -36,47 +36,29 @@ class BehaviorManager(Node):
         self.home_pose = None
 
         # ---------- QR 목표 위치 (현재 A안, odom 기준) ----------
+        # 1,4 좌표는 수정된 값 사용
         self.qr_scan_poses = {
-            1: (1.0, -1.7, -math.pi / 2.0),
+            1: (1.0, -1.7, -math.pi / 2.0),  # 수정된 QR1
             2: (4.5, -1.5, -math.pi / 2.0),
             3: (4.4,  2.0,  math.pi / 2.0),
-            4: (1.0,  2.0,  math.pi / 2.0),
+            4: (1.0,  2.0,  math.pi / 2.0),  # 수정된 QR4
         }
 
-        # ---------- 움직이는 장애물 모니터링 파라미터 ----------
-        # 정면 기준 감지 각도 (±deg)
-        self.declare_parameter('monitor_angle_deg', 60.0)
-        # 이 거리 안에 있는 레이들만 "관심 장애물"로 본다
-        self.declare_parameter('monitor_distance', 1.0)
-        # "로봇이 움직이면서 생길 수 있는 거리 변화"에 여유를 주는 마진 (m)
-        self.declare_parameter('monitor_delta_margin', 0.10)
-        # 한 프레임에서 "이상하게 많이 변한 레이" 개수가 몇 개 이상이면 동적 후보로 볼지
-        self.declare_parameter('monitor_changed_beams', 10)
-        # 그런 프레임이 연속 몇 번 나와야 BUZZER를 울릴지
-        self.declare_parameter('monitor_hit_count', 3)
-        # 동적 감지를 수행할 최소 선속도 / 최대 각속도
-        self.declare_parameter('dyn_min_linear_speed', 0.0)   # 0 이상이면 모두 사용
-        self.declare_parameter('dyn_max_angular_speed', 0.3)  # 이보다 크면 회전 중으로 보고 감지 OFF
+        # ---------- 장애물 모니터링 파라미터 ----------
+        # monitor_angle_deg: 감지 각도(정면 기준, 기본 ±32.5도 = 기존 30도에서 좌우 +2.5도 확장 가정)
+        self.declare_parameter('monitor_angle_deg', 32.5)
+        self.declare_parameter('monitor_distance', 0.7)     # 이 거리 안으로 들어오면 위험
+        self.declare_parameter('monitor_hit_count', 5)      # 연속 n번 감지 시 알람
 
         self.monitor_angle = math.radians(
             float(self.get_parameter('monitor_angle_deg').value)
         )
         self.monitor_distance = float(self.get_parameter('monitor_distance').value)
-        self.monitor_delta_margin = float(self.get_parameter('monitor_delta_margin').value)
-        self.monitor_changed_beams = int(self.get_parameter('monitor_changed_beams').value)
         self.monitor_hit_needed = int(self.get_parameter('monitor_hit_count').value)
 
-        self.dyn_min_v = float(self.get_parameter('dyn_min_linear_speed').value)
-        self.dyn_max_w = float(self.get_parameter('dyn_max_angular_speed').value)
-
-        # 모니터링용 상태
-        self.prev_front_ranges = None     # 이전 스캔의 정면 섹터 거리 배열
-        self.prev_scan_stamp = None       # 이전 스캔 타임스탬프
         self.monitor_hit_count = 0
-
-        # 로봇 속도 (odom에서 갱신)
-        self.robot_v = 0.0  # m/s
-        self.robot_w = 0.0  # rad/s
+        self.monitor_prev_min = None
+        self.last_scan = None
 
         # ---------- Publisher / Subscriber ----------
         self.state_pub = self.create_publisher(String, 'state', 10)
@@ -100,13 +82,13 @@ class BehaviorManager(Node):
         self.alarm_sub = self.create_subscription(
             Bool, 'alarm_event', self.alarm_cb, 10
         )
-
-        # LiDAR 스캔 (움직이는 장애물 감지용)
+        # LiDAR 스캔 구독 (움직이는 장애물 모니터용)
         self.scan_sub = self.create_subscription(
             LaserScan, 'scan', self.scan_cb, 10
         )
 
         # ---------- 부저 서비스 클라이언트 ----------
+        # namespace 안에서 'sound' 이므로 실제 서비스 이름은 /tb3_1/sound
         self.sound_client = self.create_client(Sound, 'sound')
 
         # ---------- 부저 반복 + 회전용 변수 ----------
@@ -133,16 +115,8 @@ class BehaviorManager(Node):
         msg.data = True
         self.nav_cancel_pub.publish(msg)
 
-    @staticmethod
-    def normalize_angle(a: float) -> float:
-        while a > math.pi:
-            a -= 2.0 * math.pi
-        while a < -math.pi:
-            a += 2.0 * math.pi
-        return a
-
     # ============================================================
-    # odom 콜백 (home_pose 저장 + yaw/속도 추적)
+    # odom 콜백 (home_pose 저장 + yaw 추적)
     # ============================================================
     def odom_cb(self, msg: Odometry):
         # 최초 한 번 home_pose 저장
@@ -155,10 +129,6 @@ class BehaviorManager(Node):
         if self.last_yaw is None:
             self.last_yaw = yaw
         self.current_yaw = yaw
-
-        # 선속도 / 각속도 저장
-        self.robot_v = msg.twist.twist.linear.x
-        self.robot_w = msg.twist.twist.angular.z
 
     def quat_to_yaw(self, x, y, z, w):
         siny = 2.0 * (w * z + x * y)
@@ -179,11 +149,13 @@ class BehaviorManager(Node):
             self.set_mode("GOTO_QR")
 
         elif cmd == "SEQ_PATROL_START":
+            # 1번부터 순차순찰 시작, 계속 QR1~4 순환
             self.current_qr = 1
             self.set_mode("SEQ_PATROL")
             self.send_goal_to_qr(1)
 
         elif cmd == "RANDOM_PATROL_START":
+            # 아무 QR이나 랜덤으로 계속 순찰
             self.set_mode("RANDOM_PATROL")
             self.current_qr = random.randint(1, 4)
             self.send_goal_to_qr(self.current_qr)
@@ -198,16 +170,8 @@ class BehaviorManager(Node):
             self.emergency_stop()
 
         elif cmd == "HANDOVER":
+            # (지금은 1대만 쓰고 있으니, 필요시 확장)
             self.start_handover()
-
-        elif cmd == "QR_SCAN_NEXT":
-            # 아직 QR 스캔 노드는 없지만, "스캔 버튼 → 다음 QR로 이동"만 구현
-            nxt = self.current_qr + 1
-            if nxt > 4:
-                nxt = 1
-            self.current_qr = nxt
-            self.send_goal_to_qr(nxt)
-            self.set_mode("GOTO_QR")
 
         else:
             self.get_logger().warn(f"Unknown CMD: {cmd}")
@@ -224,7 +188,7 @@ class BehaviorManager(Node):
 
         pose = PoseStamped()
         pose.header.stamp = self.get_clock().now().to_msg()
-        pose.header.frame_id = "odom"
+        pose.header.frame_id = "odom"     # A안: odom 기준 유지
 
         pose.pose.position.x = x
         pose.pose.position.y = y
@@ -259,56 +223,37 @@ class BehaviorManager(Node):
         self.get_logger().info("[BM] RETURN_HOME 시작")
 
     # ============================================================
-    # LiDAR 기반 "움직이는" 장애물 모니터링
+    # LiDAR 기반 움직이는 장애물 모니터링
     # ============================================================
     def scan_cb(self, msg: LaserScan):
+        """정면 ±monitor_angle 범위 안에서 가까운 장애물을 감지.
+        - 일정 거리 안에 연속적으로 들어오면 '움직이는 장애물'로 보고 BUZZER 동작 실행
         """
-        로봇이 이동 중이어도:
-        - 정면 ± monitor_angle 범위 안에서
-        - 이전 스캔 대비, '로봇 속도(v*dt)'로 설명하기 어려운 큰 거리 변화가
-          여러 레이에서 동시에 나타나면 → 움직이는 장애물로 판단.
-        """
+        self.last_scan = msg
 
-        # BUZZER/E_STOP 중엔 감지 OFF
+        now = self.get_clock().now().to_msg().sec
+        if not hasattr(self, 'last_scan_log_sec'):
+            self.last_scan_log_sec = now
+        if now != self.last_scan_log_sec:
+            self.last_scan_log_sec = now
+            self.get_logger().info(
+                f"[BM] scan_cb called, angle_min={msg.angle_min:.2f}, len={len(msg.ranges)}"
+            )
+
+        # E-STOP 이나 이미 BUZZER 모드면 추가 감지 안 함
         if self.current_mode in ["E_STOP", "BUZZER"]:
             self.monitor_hit_count = 0
-            self.prev_front_ranges = None
-            self.prev_scan_stamp = None
-            return
-
-        # 회전 속도가 크면(정지 장애물도 패턴이 크게 바뀌므로) 감지 OFF
-        if abs(self.robot_w) > self.dyn_max_w:
-            if self.monitor_hit_count != 0:
-                self.get_logger().info(
-                    f"[BM] dyn_monitor: skip (rotating), w={self.robot_w:.2f}"
-                )
-            self.monitor_hit_count = 0
-            self.prev_front_ranges = None
-            self.prev_scan_stamp = msg.header.stamp
             return
 
         angle_min = msg.angle_min
         angle_inc = msg.angle_increment
         ranges = msg.ranges
 
-        # 시간 간격 dt 계산
-        if self.prev_scan_stamp is None:
-            dt = None
-        else:
-            now = msg.header.stamp
-            dt = (now.sec - self.prev_scan_stamp.sec) + \
-                 (now.nanosec - self.prev_scan_stamp.nanosec) * 1e-9
-        self.prev_scan_stamp = msg.header.stamp
+        min_front = float('inf')
 
-        # 정면 섹터 레이들만 추출
-        front_ranges = []
+        # LiDAR 기준 0rad가 정면이라고 가정하고, ±monitor_angle 범위만 검사
         for i, r in enumerate(ranges):
-            angle = angle_min + i * angle_inc
-            rel = self.normalize_angle(angle)  # LiDAR 기준 0rad가 정면이라고 가정
-
-            if not (-self.monitor_angle <= rel <= self.monitor_angle):
-                continue
-
+            # 0.0, 유효 범위 밖, inf/nan 값은 모두 무시
             if (
                 r == 0.0
                 or math.isinf(r)
@@ -316,68 +261,50 @@ class BehaviorManager(Node):
                 or r < msg.range_min
                 or r > msg.range_max
             ):
-                front_ranges.append(float('inf'))
+                continue
+
+            angle = angle_min + i * angle_inc
+            # -pi ~ pi 로 정규화
+            rel = self.normalize_angle(angle)
+
+            if -self.monitor_angle <= rel <= self.monitor_angle:
+                if r < min_front:
+                    min_front = r
+
+        if min_front < float('inf'):
+            # 가까운 장애물이 감지됨
+            if min_front < self.monitor_distance:
+                self.monitor_hit_count += 1
             else:
-                front_ranges.append(r)
-
-        if len(front_ranges) == 0:
-            self.prev_front_ranges = None
-            return
-
-        # 첫 프레임이면 기준만 저장
-        if self.prev_front_ranges is None or dt is None or dt <= 0.0:
-            self.prev_front_ranges = front_ranges
-            self.monitor_hit_count = 0
-            return
-
-        # 로봇 선속도 기준 '정적 장애물'에서 기대되는 최대 거리 변화량
-        v = abs(self.robot_v)
-        expected_max_delta = v * dt + self.monitor_delta_margin
-
-        dynamic_beams = 0
-        min_front = float('inf')
-
-        for prev_r, curr_r in zip(self.prev_front_ranges, front_ranges):
-            if prev_r == float('inf') or curr_r == float('inf'):
-                continue
-
-            # 너무 먼 거리이면 관심 없음
-            if prev_r > self.monitor_distance and curr_r > self.monitor_distance:
-                continue
-
-            delta = abs(curr_r - prev_r)
-            if curr_r < min_front:
-                min_front = curr_r
-
-            # 로봇 이동만으로 설명하기 어려울 정도로 큰 변화라면 → 동적 후보
-            if delta > expected_max_delta:
-                dynamic_beams += 1
-
-        # 다음 프레임 비교를 위해 저장
-        self.prev_front_ranges = front_ranges
-
-        self.get_logger().info(
-            f"[BM] dyn_monitor: dyn_beams={dynamic_beams}, "
-            f"hit={self.monitor_hit_count}, v={self.robot_v:.2f}, "
-            f"w={self.robot_w:.2f}, dt={dt:.3f}, "
-            f"min_front={min_front if min_front < float('inf') else -1:.2f}"
-        )
-
-        # 동적 레이가 충분히 많으면 hit++
-        if dynamic_beams >= self.monitor_changed_beams:
-            self.monitor_hit_count += 1
+                # 감지는 되지만 아직 위험 거리 밖이면 카운트 서서히 감소
+                if self.monitor_hit_count > 0:
+                    self.monitor_hit_count -= 1
         else:
+            # 아무것도 안 보이면 카운트 감소
             if self.monitor_hit_count > 0:
                 self.monitor_hit_count -= 1
 
-        # hit 누적이 기준을 넘으면 BUZZER 동작
+        # 연속 감지 횟수가 기준을 넘으면 BUZZER 동작
         if self.monitor_hit_count >= self.monitor_hit_needed:
             self.get_logger().warn(
-                f"[BM] 움직이는 장애물 감지: dyn_beams={dynamic_beams}, "
-                f"min_front={min_front if min_front < float('inf') else -1:.2f} → BUZZER"
+                f"[BM] 움직이는 장애물 감지: min_front={min_front:.2f} m → BUZZER 동작"
             )
             self.monitor_hit_count = 0
             self.start_buzzer_rotation()
+
+        # 이전 최소 거리 저장 (원하면 여기서 거리 변화량으로 더 정교하게 '움직임' 판별 가능)
+        self.monitor_prev_min = min_front if min_front < float('inf') else None
+
+        self.get_logger().info(
+            f"[BM] monitor: min_front={min_front:.2f}, hit={self.monitor_hit_count}"
+)
+
+    def normalize_angle(self, a: float) -> float:
+        while a > math.pi:
+            a -= 2.0 * math.pi
+        while a < -math.pi:
+            a += 2.0 * math.pi
+        return a
 
     # ============================================================
     # 부저 반복 + 1바퀴 회전
@@ -389,18 +316,22 @@ class BehaviorManager(Node):
         self.last_yaw = None
         self.set_mode("BUZZER")
 
+        # 0.1초 주기로 반복
         if self.buzzer_timer is not None:
             self.buzzer_timer.cancel()
         self.buzzer_timer = self.create_timer(0.1, self.buzzer_loop)
         self.get_logger().info("[BM] BUZZER 회전 시작")
 
     def buzzer_loop(self):
+        # 각속도 유지 (제자리 회전)
         twist = Twist()
         twist.angular.z = -1.0
         self.manual_pub.publish(twist)
 
+        # 사운드 호출
         self.call_buzzer_sound(3)
 
+        # 회전량 누적
         try:
             dyaw = abs(self.current_yaw - self.last_yaw)
             if dyaw > math.pi:
@@ -411,6 +342,7 @@ class BehaviorManager(Node):
 
         self.last_yaw = self.current_yaw
 
+        # 360도(2π) 회전 완료 → 종료
         if self.rotation_accum >= (2 * math.pi):
             self.finish_buzzer_rotation()
 
@@ -433,7 +365,7 @@ class BehaviorManager(Node):
         self.sound_client.call_async(req)
 
     # ============================================================
-    # goal_reached 콜백
+    # goal_reached 콜백 (정선/난선 순찰 처리 핵심)
     # ============================================================
     def goal_reached_cb(self, msg: Bool):
         if not msg.data:
@@ -441,6 +373,7 @@ class BehaviorManager(Node):
 
         self.get_logger().info(f"[BM] Goal Reached, mode={self.current_mode}")
 
+        # 1) 정선순찰: QR1→2→3→4→1→...
         if self.current_mode == "SEQ_PATROL":
             nxt = self.current_qr + 1
             if nxt > 4:
@@ -449,16 +382,18 @@ class BehaviorManager(Node):
             self.send_goal_to_qr(nxt)
             return
 
+        # 2) 난선순찰: 매번 랜덤 QR 선택
         if self.current_mode == "RANDOM_PATROL":
             nxt = random.randint(1, 4)
             self.current_qr = nxt
             self.send_goal_to_qr(nxt)
             return
 
+        # 3) 복귀 완료, GOTO_QR 완료 등 나머지는 IDLE로
         self.set_mode("IDLE")
 
     # ============================================================
-    # 교대 (향후 2대 로봇용)
+    # 교대(향후 2대 로봇용) – 지금은 크게 쓰진 않음
     # ============================================================
     def start_handover(self):
         if self.last_scanned_qr == 0:
@@ -470,28 +405,27 @@ class BehaviorManager(Node):
         self.get_logger().info(f"[HANDOVER] publish last_scanned_qr={self.last_scanned_qr}")
 
     def handover_cb(self, msg: Int32):
+        # 1대만 쓸 땐 크게 의미 없음. 나중에 확장용.
         self.get_logger().info(f"[HANDOVER] received last_qr={msg.data}")
 
     # ============================================================
-    # 외부 장애물 감지 이벤트
+    # 장애물 감지 이벤트 (외부 obstacle_monitor 노드에서 alarm_event 발행 시)
     # ============================================================
     def alarm_cb(self, msg: Bool):
         if msg.data:
-            self.get_logger().warn(
-                "Moving obstacle detected (external alarm_event) -> BUZZER behavior"
-            )
+            self.get_logger().warn("Moving obstacle detected (external) -> BUZZER behavior")
             self.start_buzzer_rotation()
-        # 만약 obstacle_monitor 를 완전히 끄고 싶으면, 위 두 줄을 주석 처리하고
-        # 단순히 로그만 남기도록 바꿔도 됩니다.
 
     # ============================================================
     # E-STOP
     # ============================================================
     def emergency_stop(self):
+        # 내비게이션 취소 + 속도 0
         self.send_nav_cancel()
         stop = Twist()
         self.manual_pub.publish(stop)
 
+        # 부저 타이머도 중단
         if self.buzzer_timer:
             self.buzzer_timer.cancel()
             self.buzzer_timer = None

@@ -4,6 +4,7 @@ setup.py
 launch/b_mode_two_robots.launch.py
 launch/gui_with_bm.launch.py
 launch/real_one_robot.launch.py
+launch/sim_two_robots.launch.py
 launch/spawn_4_boxes.launch.py
 launch/spawn_world_and_boxes.launch.py
 resource/tb3_security_system
