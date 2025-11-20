@@ -8,6 +8,7 @@ from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Bool
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 
 def quat_to_yaw(x, y, z, w):
@@ -24,11 +25,11 @@ class SimpleNavigator(Node):
         # 기본 이동/허용 오차/장애물 파라미터
         self.declare_parameter('linear_speed', 0.15)
         self.declare_parameter('angular_speed', 0.8)
-        self.declare_parameter('pos_tolerance', 0.15)        # 위치 허용 오차(m)
-        self.declare_parameter('yaw_tolerance_deg', 10.0)    # 각도 허용 오차(도)
-        self.declare_parameter('front_angle_deg', 40.0)      # 정면으로 보는 각도(도)
-        self.declare_parameter('obstacle_distance', 0.40)    # 회피 시작 거리(m)
-        self.declare_parameter('critical_distance', 0.25)    # 너무 가까운 거리(m)
+        self.declare_parameter('pos_tolerance', 0.15)
+        self.declare_parameter('yaw_tolerance_deg', 10.0)
+        self.declare_parameter('front_angle_deg', 15.0)
+        self.declare_parameter('obstacle_distance', 0.40)
+        self.declare_parameter('critical_distance', 0.25)
 
         self.linear_speed = float(self.get_parameter('linear_speed').value)
         self.angular_speed = float(self.get_parameter('angular_speed').value)
@@ -58,7 +59,7 @@ class SimpleNavigator(Node):
         # 회피 상태: NONE / TURN / ARC / BACK_OFF
         self.avoid_state = 'NONE'
         self.avoid_clear_count = 0
-        self.avoid_clear_needed = 5  # N번 연속 깨끗하면 회피 해제
+        self.avoid_clear_needed = 5
 
         # 통신 설정
         self.cmd_goal_sub = self.create_subscription(
@@ -67,15 +68,21 @@ class SimpleNavigator(Node):
         self.odom_sub = self.create_subscription(
             Odometry, 'odom', self.odom_callback, 10
         )
-        self.scan_sub = self.create_subscription(
-            LaserScan, 'scan', self.scan_callback, 10
+        scan_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1
         )
 
+        self.scan_sub = self.create_subscription(
+            LaserScan,
+            'scan',
+            self.scan_callback,
+            qos_profile=scan_qos
+        )
         self.nav_cancel_sub = self.create_subscription(
             Bool, 'nav_cancel', self.nav_cancel_callback, 10
         )
-
-        # 수동 제어 입력
         self.manual_sub = self.create_subscription(
             Twist, 'cmd_vel_manual', self.manual_cmd_callback, 10
         )
@@ -87,9 +94,7 @@ class SimpleNavigator(Node):
 
         self.get_logger().info('SimpleNavigator started')
 
-    # ---------------------------
-    # 콜백
-    # ---------------------------
+    # --------------------- 콜백들 ---------------------
     def goal_callback(self, msg: PoseStamped):
         self.goal_x = msg.pose.position.x
         self.goal_y = msg.pose.position.y
@@ -124,22 +129,16 @@ class SimpleNavigator(Node):
             self.publish_stop()
 
     def manual_cmd_callback(self, msg: Twist):
-        # 목표가 없을 때만 수동 제어를 그대로 /cmd_vel로 전달
+        # 목표가 없을 때만 수동 제어를 /cmd_vel로 전달
         if not self.has_goal:
             self.cmd_vel_pub.publish(msg)
 
-    # ---------------------------
-    # 유틸
-    # ---------------------------
+    # --------------------- 유틸 ---------------------
     def publish_stop(self):
         twist = Twist()
         self.cmd_vel_pub.publish(twist)
 
     def check_front_obstacle(self):
-        """
-        정면(0 또는 2π 근처)에서 가장 가까운 거리만 본다.
-        angle_min=0, angle_max≈2π 가정.
-        """
         if self.last_scan is None:
             return False, float('inf')
 
@@ -148,19 +147,33 @@ class SimpleNavigator(Node):
         angle_inc = scan.angle_increment
         ranges = scan.ranges
 
-        # 안전하게: angle_min이 0이 아니더라도, 0~2π 범위로 본다
-        front_min = float('inf')
+        # 정면 중심 각도 (일단 0rad로 가정, 필요하면 파라미터로 조정 가능)
+        front_center = 0.0
+        half = self.front_angle  # front_angle_deg 를 rad 로 바꿔둔 값
+
+        min_front = float('inf')
+
         for i, r in enumerate(ranges):
-            angle = angle_min + i * angle_inc  # 0 ~ 2π 근처
-            if math.isinf(r) or math.isnan(r):
+            # 0.0, range_min 이하, range_max 이상, inf/nan 은 전부 무시
+            if (
+                r == 0.0
+                or math.isinf(r)
+                or math.isnan(r)
+                or r < scan.range_min
+                or r > scan.range_max
+            ):
                 continue
 
-            # 정면 조건: angle < front_angle or angle > 2π - front_angle
-            if angle < self.front_angle or angle > (2.0 * math.pi - self.front_angle):
-                if r < front_min:
-                    front_min = r
+            angle = angle_min + i * angle_inc
 
-        return (front_min < self.obstacle_distance), front_min
+            # 현재 각도를 정면 기준으로 정규화(-π ~ π)
+            rel = self.normalize_angle(angle - front_center)
+
+            if -half <= rel <= half:
+                if r < min_front:
+                    min_front = r
+
+        return (min_front < self.obstacle_distance), min_front
 
     @staticmethod
     def normalize_angle(a: float) -> float:
@@ -170,11 +183,8 @@ class SimpleNavigator(Node):
             a += 2.0 * math.pi
         return a
 
-    # ---------------------------
-    # 메인 제어 루프
-    # ---------------------------
+    # --------------------- 메인 제어 루프 ---------------------
     def control_loop(self):
-        # 목표 없거나 위치 정보 없으면 자동 제어 안 함
         if not self.has_goal or not self.have_odom:
             return
 
@@ -182,12 +192,11 @@ class SimpleNavigator(Node):
         dy = self.goal_y - self.current_y
         dist = math.hypot(dx, dy)
 
-        # 위치/각도 오차
         pos_ok = dist < self.pos_tolerance
         yaw_error = self.normalize_angle(self.goal_yaw - self.current_yaw)
         yaw_ok = abs(yaw_error) < self.yaw_tolerance
 
-        # 1) 진짜 도착
+        # 1) 도착
         if pos_ok and yaw_ok:
             self.publish_stop()
             self.has_goal = False
@@ -236,32 +245,27 @@ class SimpleNavigator(Node):
 
         # 4) 회피 상태별 동작
         if self.avoid_state == 'BACK_OFF':
-            # 살짝 뒤로 빠지면서 회전 (충돌 방지)
             twist.linear.x = -0.05
             twist.angular.z = self.angular_speed
             self.cmd_vel_pub.publish(twist)
 
-            # 너무 오래 BACK_OFF 하지 않도록 front_min이 어느 정도 늘어나면 TURN으로 전환
             if front_min > self.critical_distance * 1.5:
                 self.avoid_state = 'TURN'
             return
 
         if self.avoid_state == 'TURN':
-            # 제자리 회전으로 정면을 비워준다
             twist.linear.x = 0.0
             twist.angular.z = self.angular_speed
             self.cmd_vel_pub.publish(twist)
 
-            # 정면이 어느 정도 비워지면 ARC로 전환
             if not obstacle or front_min > self.obstacle_distance * 1.3:
                 self.avoid_state = 'ARC'
                 self.get_logger().info('Switch TURN -> ARC')
             return
 
         if self.avoid_state == 'ARC':
-            # 천천히 앞으로 움직이면서 회전 (원 궤적)
             twist.linear.x = 0.08
-            twist.angular.z = self.angular_speed * 0.6
+            twist.angular.z = self.angular_speed * 0.5
             self.cmd_vel_pub.publish(twist)
             return
 
