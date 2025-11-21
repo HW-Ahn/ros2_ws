@@ -64,12 +64,15 @@ ros2 run v4l2_camera v4l2_camera_node --ros-arg --remap __ns:=/tb3_1
 ros2 run v4l2_camera v4l2_camera_node --ros-args --remap __ns:=/tb3_2
 
 원격
-ros2 launch tb3_security_system real_two_robots.launch.py
+
 ros2 run tb3_security_system gui_main
 
 behavior_manager, simple_navigator 
 ros2 run tb3_security_system behavior_manager --ros-args -r __ns:=/tb3_1
 ros2 run tb3_security_system simple_navigator --ros-args -r __ns:=/tb3_1
+
+ros2 run tb3_security_system behavior_manager --ros-args -r __ns:=/tb3_2
+ros2 run tb3_security_system simple_navigator --ros-args -r __ns:=/tb3_2
 
 
 
@@ -85,5 +88,9 @@ ros2 run tb3_security_system simple_navigator --ros-args -r __ns:=/tb3_1
   sudo fuser -k 11345/tcp
   sudo fuser -k 11346/tcp
 
+
+ros2 launch tb3_security_system real_two_robots.launch.py
+ros2 launch tb3_security_system sim_two_robots.launch.py
+ros2 launch tb3_security_system real_one_robot.launch.py
 
 

@@ -24,7 +24,7 @@ class SimpleNavigator(Node):
 
         # 기본 이동/허용 오차/장애물 파라미터
         self.declare_parameter('linear_speed', 0.15)
-        self.declare_parameter('angular_speed', 0.8)
+        self.declare_parameter('angular_speed', 0.6)
         self.declare_parameter('pos_tolerance', 0.15)
         self.declare_parameter('yaw_tolerance_deg', 10.0)
 
